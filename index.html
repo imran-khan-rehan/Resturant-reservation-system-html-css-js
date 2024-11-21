@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Reservation System</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar">
+            <div class="logo">
+                <i class="fas fa-utensils"></i>
+                <h2>Restaurant Reserve</h2>
+            </div>
+            <ul>
+                <li><a href="/"><i class="fas fa-home"></i> Home</a></li>
+                <li><a href="/restaurants"><i class="fas fa-store"></i> Manage Restaurants</a></li>
+                <li><a href="/rooms"><i class="fas fa-door-open"></i> Manage Rooms</a></li>
+                <li><a href="/reservations"><i class="fas fa-calendar-alt"></i> Book Reservation</a></li>
+            </ul>
+        </nav>
+
+        <main class="content">
+            <!-- Home/Welcome Section -->
+            <section id="home" class="section">
+                <div class="welcome-container">
+                    <h1><i class="fas fa-star"></i> Welcome to Restaurant Reserve</h1>
+                    <p>Your premier destination for seamless dining reservations</p>
+                    <div class="features-grid">
+                        <div class="feature-card">
+                            <i class="fas fa-store-alt"></i>
+                            <h3>Manage Restaurants</h3>
+                            <p>Add and manage your restaurant portfolio</p>
+                        </div>
+                        <div class="feature-card">
+                            <i class="fas fa-door-open"></i>
+                            <h3>Manage Rooms</h3>
+                            <p>Configure dining spaces and pricing</p>
+                        </div>
+                        <div class="feature-card">
+                            <i class="fas fa-calendar-check"></i>
+                            <h3>Easy Booking</h3>
+                            <p>Streamlined reservation process</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Manage Restaurants Section -->
+            <section id="restaurants" class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-store"></i> Manage Restaurants</h2>
+                </div>
+                <div class="card">
+                    <form id="restaurant-form" class="form">
+                        <input type="hidden" id="restaurant-id">
+                        <div class="form-group">
+                            <label for="restaurant-name">Restaurant Name</label>
+                            <input type="text" id="restaurant-name" required>
+                        </div>
+                        <button type="submit" id="restaurant-submit">
+                            <i class="fas fa-plus"></i> Add Restaurant
+                        </button>
+                    </form>
+                </div>
+                <div class="card table-card">
+                    <table id="restaurants-table">
+                        <thead>
+                            <tr>
+                                <th>Restaurant Name</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="restaurants-list"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Manage Rooms Section -->
+            <section id="rooms" class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-door-open"></i> Manage Rooms</h2>
+                </div>
+                <div class="card">
+                    <form id="room-form" class="form">
+                        <input type="hidden" id="room-id">
+                        <div class="form-group">
+                            <label for="restaurant-select">Select Restaurant</label>
+                            <select id="restaurant-select" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="room-name">Room Name</label>
+                            <input type="text" id="room-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="room-price">Price</label>
+                            <input type="number" id="room-price" required>
+                        </div>
+                        <button type="submit" id="room-submit">
+                            <i class="fas fa-plus"></i> Add Room
+                        </button>
+                    </form>
+                </div>
+                <div class="card table-card">
+                    <table id="rooms-table">
+                        <thead>
+                            <tr>
+                                <th>Restaurant</th>
+                                <th>Room Name</th>
+                                <th>Price</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rooms-list"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Book Reservation Section -->
+            <section id="reservations" class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-calendar-alt"></i> Book Reservation</h2>
+                </div>
+                <div class="card">
+                    <form id="reservation-form" class="form">
+                        <input type="hidden" id="reservation-id">
+                        <div class="form-group">
+                            <label for="reservation-date">Select Date</label>
+                            <input type="date" id="reservation-date" required>
+                        </div>
+                        <button type="button" onclick="showAvailableRooms()" class="secondary-button">
+                            <i class="fas fa-search"></i> Show Available Rooms
+                        </button>
+                        <div id="available-rooms-container" class="hidden">
+                            <div class="form-group">
+                                <label for="available-rooms">Select Room</label>
+                                <select id="available-rooms" required></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="guest-name">Guest Name</label>
+                                <input type="text" id="guest-name" required>
+                            </div>
+                            <button type="submit" id="reservation-submit">
+                                <i class="fas fa-calendar-plus"></i> Book Now
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card table-card">
+                    <table id="reservations-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Room</th>
+                                <th>Guest Name</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reservations-list"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
