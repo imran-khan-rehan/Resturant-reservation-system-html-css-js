@@ -1,26 +1,38 @@
+const API_BASE_URL = Config.API_URL;
 const bookingPopup = document.getElementById('booking-popup');
 const bookingForm = document.getElementById('booking-form');
 const bookedTablesBody = document.getElementById('booked-tables').querySelector('tbody');
 const availableTablesDiv = document.getElementById('available-tables');
-let bookedTables = JSON.parse(localStorage.getItem('bookedTables')) || [];
-let tables = JSON.parse(localStorage.getItem('tables')) || [];
 let isBookingEditing = false;
 let editingBookingId = null;
 
-function displayBookedTables() {
+async function fetchBookedTables() {
+  try {
+    const response = await fetch(API_BASE_URL+'/BookTables');
+    if (!response.ok) throw new Error('Failed to fetch booked tables');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching booked tables:', error);
+    alert('Failed to load booked tables. Please try again.');
+    return [];
+  }
+}
+
+async function displayBookedTables() {
+  const bookedTables = await fetchBookedTables();
   bookedTablesBody.innerHTML = '';
   bookedTables.forEach((booking, index) => {
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td>${index + 1}</td>
-      <td>${booking.tableName}</td>
-      <td>${booking.date}</td>
-      <td>${booking.customerName}</td>
-      <td>
-        <button class="btn-edit" onclick="editBooking(${index})">Edit</button>
-        <button class="btn-delete" onclick="deleteBooking(${index})">Delete</button>
-      </td>
-    `;
+            <td>${index + 1}</td>
+            <td>${booking.tableName}</td>
+            <td>${new Date(booking.date).toLocaleDateString()}</td>
+            <td>${booking.customerName}</td>
+            <td>
+                <button class="btn-edit" onclick="editBooking(${booking.id})">Edit</button>
+                <button class="btn-delete" onclick="deleteBooking(${booking.id})">Delete</button>
+            </td>
+        `;
     bookedTablesBody.appendChild(row);
   });
 }
@@ -40,34 +52,45 @@ function closeBookingPopup() {
   bookingPopup.style.display = 'none';
 }
 
-function showAvailableTables() {
+async function showAvailableTables() {
   const selectedDate = document.getElementById('booking-date').value;
   if (!selectedDate) {
     alert('Please select a date first.');
     return;
   }
 
-  const bookedTableNames = bookedTables
-    .filter((booking) => booking.date === selectedDate)
-    .map((booking) => booking.tableName);
+  try {
+    const response = await fetch(API_BASE_URL+'/BookTables');
+    const bookedTables = await response.json();
+    const bookedTableNames = bookedTables
+      .filter(booking => new Date(booking.date).toISOString().split('T')[0] === selectedDate)
+      .map(booking => booking.tableName);
 
-  const availableTables = tables.filter(
-    (table) => !bookedTableNames.includes(table.name)
-  );
+    const tablesResponse = await fetch(API_BASE_URL + '/Tables');
+    const tables = await tablesResponse.json();
 
-  availableTablesDiv.innerHTML = availableTables.length
-    ? availableTables.map(
-      (table) => `
-          <div class="table-item">
-            <input type="radio" name="selected-table" value="${table.name}" id="table-${table.name}" required />
-            <label for="table-${table.name}">${table.name}</label>
-          </div>
-        `
-    ).join('')
-    : '<p>No tables available for the selected date.</p>';
+    const availableTables = tables.filter(
+      table => !bookedTableNames.includes(table.name)
+    );
+
+    availableTablesDiv.innerHTML = availableTables.length
+      ? availableTables.map(
+        table => `
+                    <div class="table-item">
+                        <input type="radio" name="selected-table" value="${table.name}" 
+                               data-table-id="${table.id}" id="table-${table.name}" required />
+                        <label for="table-${table.name}">${table.name}</label>
+                    </div>
+                `
+      ).join('')
+      : '<p>No tables available for the selected date.</p>';
+  } catch (error) {
+    console.error('Error fetching tables:', error);
+    alert('Failed to load available tables. Please try again.');
+  }
 }
 
-bookingForm.addEventListener('submit', function (event) {
+bookingForm.addEventListener('submit', async function (event) {
   event.preventDefault();
 
   const selectedTable = document.querySelector('input[name="selected-table"]:checked');
@@ -76,76 +99,109 @@ bookingForm.addEventListener('submit', function (event) {
     return;
   }
 
-  const date = document.getElementById('booking-date').value;
-  const customerName = document.getElementById('customer-name').value;
-
   const bookingData = {
+    date: new Date(document.getElementById('booking-date').value).toISOString(),
     tableName: selectedTable.value,
-    date,
-    customerName,
+    customerName: document.getElementById('customer-name').value,
+    tableId: parseInt(selectedTable.dataset.tableId)
   };
 
-  if (isBookingEditing) {
-    bookedTables[editingBookingId] = bookingData;
-  } else {
-    bookedTables.push(bookingData);
-  }
+  try {
+    if (isBookingEditing) {
+      const response = await fetch(`${API_BASE_URL + '/BookTables'}/${editingBookingId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ...bookingData, id: editingBookingId })
+      });
+      if (!response.ok) throw new Error('Failed to update booking');
+    } else {
+      const response = await fetch(API_BASE_URL+'/BookTables', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bookingData)
+      });
+      if (!response.ok) throw new Error('Failed to create booking');
+    }
 
-  localStorage.setItem('bookedTables', JSON.stringify(bookedTables));
-  displayBookedTables();
-  closeBookingPopup();
+    await displayBookedTables();
+    closeBookingPopup();
+  } catch (error) {
+    console.error('Error saving booking:', error);
+    alert('Failed to save booking. Please try again.');
+  }
 });
 
-function editBooking(index) {
-  isBookingEditing = true;
-  editingBookingId = index;
+async function editBooking(id) {
+  try {
+    const response = await fetch(`${API_BASE_URL+'/BookTables'}/${id}`);
+    if (!response.ok) throw new Error('Failed to fetch booking details');
 
-  const booking = bookedTables[index];
-  document.getElementById('booking-date').value = booking.date;
-  document.getElementById('customer-name').value = booking.customerName;
-document.getElementById('showtable').style.display='none';
-  showAvailableTables2();
+    const booking = await response.json();
+    isBookingEditing = true;
+    editingBookingId = id;
 
-  setTimeout(() => {
-    const selectedTableName = booking.tableName;
-    const tableInput = document.querySelector(`input[name="selected-table"][value="${selectedTableName}"]`);
-    if (tableInput) {
-      tableInput.checked = true;
-    }
-  }, 100);
+    document.getElementById('booking-date').value = new Date(booking.date).toISOString().split('T')[0];
+    document.getElementById('customer-name').value = booking.customerName;
+    document.getElementById('showtable').style.display = 'none';
 
-  document.getElementById('popup-title').textContent = 'Edit Booking';
-  showBookingPopup(true);
+    await showAvailableTables2();
+
+    setTimeout(() => {
+      const tableInput = document.querySelector(`input[name="selected-table"][value="${booking.tableName}"]`);
+      if (tableInput) {
+        tableInput.checked = true;
+      }
+    }, 100);
+
+    document.getElementById('popup-title').textContent = 'Edit Booking';
+    showBookingPopup(true);
+  } catch (error) {
+    console.error('Error fetching booking details:', error);
+    alert('Failed to load booking details. Please try again.');
+  }
 }
 
-function showAvailableTables2() {
-  const selectedDate = document.getElementById('booking-date').value;
+async function showAvailableTables2() {
+  try {
+    const tablesResponse = await fetch(API_BASE_URL + '/Tables');
+    const tables = await tablesResponse.json();
 
-  availableTablesDiv.innerHTML = tables.length
-    ? tables.map(
-      (table) => `
-            <div class="table-item">
-              <input type="radio" name="selected-table" value="${table.name}" id="table-${table.name}" required />
-              <label for="table-${table.name}">${table.name}</label>
-            </div>
-          `
-    ).join('')
-    : '<p>No tables available.</p>';
+    availableTablesDiv.innerHTML = tables.length
+      ? tables.map(
+        table => `
+                    <div class="table-item">
+                        <input type="radio" name="selected-table" value="${table.name}" 
+                               data-table-id="${table.id}" id="table-${table.name}" required />
+                        <label for="table-${table.name}">${table.name}</label>
+                    </div>
+                `
+      ).join('')
+      : '<p>No tables available.</p>';
+  } catch (error) {
+    console.error('Error fetching tables:', error);
+    alert('Failed to load tables. Please try again.');
+  }
 }
 
-
-
-
-
-
-function deleteBooking(index) {
-  bookedTables.splice(index, 1);
-  localStorage.setItem('bookedTables', JSON.stringify(bookedTables));
-  displayBookedTables();
+async function deleteBooking(id) {
+  try {
+    const response = await fetch(`${API_BASE_URL+'/BookTables'}/${id}`, {
+      method: 'DELETE'
+    });
+    if (!response.ok) throw new Error('Failed to delete booking');
+    await displayBookedTables();
+  } catch (error) {
+    console.error('Error deleting booking:', error);
+    alert('Failed to delete booking. Please try again.');
+  }
 }
 
-function init() {
-  displayBookedTables();
+async function init() {
+  await displayBookedTables();
 }
 
 init();

@@ -1,12 +1,25 @@
-
 const popup = document.getElementById('popup');
 const restaurantForm = document.getElementById('restaurant-form');
 const restaurantTableBody = document.getElementById('restaurant-table').querySelector('tbody');
-let restaurants = JSON.parse(localStorage.getItem('restaurants')) || [];
+// import { backendUrl } from "./config.js";
+const apiUrl = Config.API_URL + '/Restaurants';
+
 let isEditing = false;
 let editingId = null;
 
-function displayRestaurants() {
+async function fetchRestaurants() {
+  try {
+    const response = await fetch(apiUrl);
+    if (!response.ok) throw new Error('Failed to fetch restaurants.');
+    const data = await response.json();
+    displayRestaurants(data);
+  } catch (error) {
+    console.error(error);
+    alert('Error fetching restaurants. Please try again.');
+  }
+}
+
+function displayRestaurants(restaurants) {
   restaurantTableBody.innerHTML = '';
   restaurants.forEach((restaurant, index) => {
     const row = document.createElement('tr');
@@ -15,8 +28,8 @@ function displayRestaurants() {
       <td>${restaurant.name}</td>
       <td>${restaurant.location}</td>
       <td>
-        <button class="btn-edit" onclick="editRestaurant(${index})">Edit</button>
-        <button class="btn-delete" onclick="deleteRestaurant(${index})">Delete</button>
+        <button class="btn-edit" onclick="editRestaurant(${restaurant.id}, '${restaurant.name}', '${restaurant.location}')">Edit</button>
+        <button class="btn-delete" onclick="deleteRestaurant(${restaurant.id})">Delete</button>
       </td>
     `;
     restaurantTableBody.appendChild(row);
@@ -37,37 +50,76 @@ function closePopup() {
   popup.style.display = 'none';
 }
 
-restaurantForm.addEventListener('submit', function (event) {
+restaurantForm.addEventListener('submit', async function (event) {
   event.preventDefault();
   const name = document.getElementById('restaurant-name').value;
   const location = document.getElementById('restaurant-location').value;
 
-  if (isEditing) {
-    restaurants[editingId] = { name, location };
-  } else {
-    restaurants.push({ name, location });
+  try {
+    if (isEditing) {
+      await updateRestaurant(editingId, { "id":editingId,name, location });
+    } else {
+      await addRestaurant({ name, location });
+    }
+    closePopup();
+    fetchRestaurants();
+  } catch (error) {
+    console.error(error);
+    alert('Error saving restaurant. Please try again.');
   }
-
-  localStorage.setItem('restaurants', JSON.stringify(restaurants));
-  displayRestaurants();
-  closePopup();
 });
 
-function editRestaurant(index) {
+async function addRestaurant(restaurant) {
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(restaurant),
+    });
+    if (!response.ok) throw new Error('Failed to add restaurant.');
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+
+function editRestaurant(id, name, location) {
   isEditing = true;
-  editingId = index;
-  const restaurant = restaurants[index];
-  document.getElementById('restaurant-name').value = restaurant.name;
-  document.getElementById('restaurant-location').value = restaurant.location;
+  editingId = id;
+  document.getElementById('restaurant-name').value = name;
+  document.getElementById('restaurant-location').value = location;
   document.getElementById('popup-title').textContent = 'Edit Restaurant';
   showPopup(true);
 }
 
-function deleteRestaurant(index) {
-  restaurants.splice(index, 1);
-  localStorage.setItem('restaurants', JSON.stringify(restaurants));
-  displayRestaurants();
+async function updateRestaurant(id, restaurant) {
+  try {
+    console.log(id);
+    console.log("res",restaurant);
+    const response = await fetch(`${apiUrl}/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(restaurant),
+    });
+    if (!response.ok) throw new Error('Failed to update restaurant.');
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 }
 
+async function deleteRestaurant(id) {
+  try {
+    const response = await fetch(`${apiUrl}/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error('Failed to delete restaurant.');
+    fetchRestaurants();
+  } catch (error) {
+    console.error(error);
+    alert('Error deleting restaurant. Please try again.');
+  }
+}
 
-displayRestaurants();
+// Fetch and display restaurants on page load
+fetchRestaurants();
