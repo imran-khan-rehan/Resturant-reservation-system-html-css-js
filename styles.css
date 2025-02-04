@@ -26,7 +26,6 @@ body {
     min-height: 100vh;
 }
 
-/* Sidebar Styling */
 .sidebar {
     width: 280px;
     background-color: var(--primary-color);
@@ -83,14 +82,14 @@ body {
     width: 20px;
 }
 
-/* Main Content */
+
 .content {
     flex-grow: 1;
     margin-left: 280px;
     padding: 2rem;
 }
 
-/* Section Styling */
+
 .section {
     display: none;
 }
@@ -110,7 +109,7 @@ body {
     gap: 1rem;
 }
 
-/* Welcome Section */
+
 .welcome-container {
     text-align: center;
     padding: 3rem 0;
@@ -158,7 +157,7 @@ body {
     color: var(--primary-color);
 }
 
-/* Card Styling */
+
 .card {
     background: white;
     padding: 2rem;
@@ -167,7 +166,7 @@ body {
     margin-bottom: 2rem;
 }
 
-/* Form Styling */
+
 .form {
     display: flex;
     flex-direction: column;
@@ -227,7 +226,7 @@ button:hover {
     background-color: #7f8c8d;
 }
 
-/* Table Styling */
+
 .table-card {
     overflow-x: auto;
 }
@@ -277,7 +276,7 @@ tbody tr:hover {
     background-color: #c0392b;
 }
 
-/* Utilities */
+
 .hidden {
     display: none;
 }
