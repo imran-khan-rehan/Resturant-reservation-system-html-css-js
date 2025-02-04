@@ -5,12 +5,11 @@ const STORAGE_KEYS = {
     RESERVATIONS: 'reservations'
 };
 
-// State Management
 let restaurants = JSON.parse(localStorage.getItem(STORAGE_KEYS.RESTAURANTS)) || [];
 let rooms = JSON.parse(localStorage.getItem(STORAGE_KEYS.ROOMS)) || [];
 let reservations = JSON.parse(localStorage.getItem(STORAGE_KEYS.RESERVATIONS)) || [];
 
-// Router
+
 function initRouter() {
     const routes = {
         '/': 'home',
@@ -27,7 +26,7 @@ function initRouter() {
         document.getElementById(sectionId).style.display = 'block';
     }
 
-    // Handle navigation
+
     document.querySelectorAll('nav a').forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
@@ -37,16 +36,16 @@ function initRouter() {
         });
     });
 
-    // Handle browser back/forward
+
     window.addEventListener('popstate', () => {
         updateContent(window.location.pathname);
     });
 
-    // Initial route
+
     updateContent(window.location.pathname);
 }
 
-// Utility Functions
+
 function updateLocalStorage() {
     localStorage.setItem(STORAGE_KEYS.RESTAURANTS, JSON.stringify(restaurants));
     localStorage.setItem(STORAGE_KEYS.ROOMS, JSON.stringify(rooms));
@@ -60,20 +59,18 @@ function resetForm(formId) {
     submitBtn.innerHTML = `<i class="fas fa-plus"></i> ${submitBtn.textContent.includes('Save') ? 'Add' : 'Book'} ${formId.split('-')[0].charAt(0).toUpperCase() + formId.split('-')[0].slice(1)}`;
 }
 
-// Restaurant Management
+
 document.getElementById('restaurant-form').addEventListener('submit', function(e) {
     e.preventDefault();
     const restaurantId = document.getElementById('restaurant-id').value;
     const restaurantName = document.getElementById('restaurant-name').value;
 
     if (restaurantId) {
-        // Update existing restaurant
         const index = restaurants.findIndex(r => r.id === parseInt(restaurantId));
         if (index !== -1) {
             restaurants[index].name = restaurantName;
         }
     } else {
-        // Add new restaurant
         restaurants.push({
             id: Date.now(),
             name: restaurantName
@@ -128,7 +125,6 @@ function deleteRestaurant(id) {
     }
 }
 
-// Room Management
 function updateRestaurantDropdowns() {
     const restaurantSelects = document.querySelectorAll('#restaurant-select, #filter-restaurant');
     restaurantSelects.forEach(select => {
@@ -150,7 +146,7 @@ document.getElementById('room-form').addEventListener('submit', function(e) {
     const roomPrice = document.getElementById('room-price').value;
 
     if (roomId) {
-        // Update existing room
+
         const index = rooms.findIndex(r => r.id === parseInt(roomId));
         if (index !== -1) {
             rooms[index] = {
@@ -161,7 +157,6 @@ document.getElementById('room-form').addEventListener('submit', function(e) {
             };
         }
     } else {
-        // Add new room
         rooms.push({
             id: Date.now(),
             restaurantId: parseInt(restaurantId),
@@ -219,14 +214,12 @@ function deleteRoom(id) {
     }
 }
 
-// Reservation Management
 function showAvailableRooms() {
     const dateInput = document.getElementById('reservation-date');
     const availableRoomsSelect = document.getElementById('available-rooms');
     const availableRoomsContainer = document.getElementById('available-rooms-container');
 
     if (dateInput.value) {
-        // Filter out rooms that are already reserved for the selected date
         const reservedRoomIds = reservations
             .filter(res => res.date === dateInput.value)
             .map(res => res.roomId);
@@ -258,7 +251,6 @@ document.getElementById('reservation-form').addEventListener('submit', function(
     const restaurant = restaurants.find(r => r.id === room.restaurantId);
 
     if (reservationId) {
-        // Update existing reservation
         const index = reservations.findIndex(r => r.id === parseInt(reservationId));
         if (index !== -1) {
             reservations[index] = {
@@ -271,7 +263,6 @@ document.getElementById('reservation-form').addEventListener('submit', function(
             };
         }
     } else {
-        // Add new reservation
         reservations.push({
             id: Date.now(),
             date,
@@ -318,7 +309,6 @@ function editReservation(id) {
         document.getElementById('reservation-date').value = reservation.date;
         document.getElementById('guest-name').value = reservation.guestName;
         
-        // Show available rooms and select the current room
         showAvailableRooms();
         document.getElementById('available-rooms').value = reservation.roomId;
         document.getElementById('available-rooms-container').classList.remove('hidden');
@@ -336,7 +326,6 @@ function deleteReservation(id) {
     }
 }
 
-// Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
     initRouter();
     renderRestaurants();
